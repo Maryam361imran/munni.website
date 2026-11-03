@@ -1,0 +1,86 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+
+      allow create: if isSelf(uid)
+        && request.resource.data.role == 'student'
+        && request.resource.data.email == request.auth.token.email;
+
+      allow update: if isSelf(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email;
+
+      allow delete: if isAdmin();
+
+      match /fcmTokens/{tokenId} {
+        allow read, create, update, delete: if isSelf(uid);
+      }
+
+      match /notifications/{id} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    match /faculty/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /lectures/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /notifications/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /updateNotifications/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /complaints/{id} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.status == 'Submitted';
+
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /attendanceSessions/{id} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /attendance/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.studentEmail == request.auth.token.email);
+
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
