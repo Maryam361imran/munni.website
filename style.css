@@ -2115,3 +2115,50 @@ body.dark #facultyGrid .empty-card {
     background: #eee;
     color: #333;
 }
+.top-notification-banner {
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 600px);
+  z-index: 99999;
+  background: #0b1f3a;
+  color: #fff;
+  padding: 16px 20px;
+  border-left: 5px solid #e5b84b;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  animation: noticeSlide 0.35s ease;
+}
+
+.top-notification-banner[hidden] {
+  display: none;
+}
+
+.top-notification-banner p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.top-notification-banner button {
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+@keyframes noticeSlide {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
