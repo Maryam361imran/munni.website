@@ -2182,3 +2182,18 @@ body.dark #facultyGrid .empty-card {
         color: #e7edf5;
     }
 }
+.admin-attendance-btn {
+  background: #d6a94f;
+  color: #0b1f3a;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.admin-attendance-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
