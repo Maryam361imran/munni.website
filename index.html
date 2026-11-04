@@ -21,13 +21,13 @@
 
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
+
   OneSignalDeferred.push(async function (OneSignal) {
     await OneSignal.init({
       appId: "622964c8-d68c-41c4-837d-84fd5e79da05",
-serviceWorkerPath: "/munni.website/OneSignalSDKWorker.js",
-serviceWorkerParam: {
-  scope: "/munni.website/"
-}
+      serviceWorkerPath: "/munni.website/OneSignalSDKWorker.js",
+      serviceWorkerParam: {
+        scope: "/munni.website/"
       }
     });
   });
