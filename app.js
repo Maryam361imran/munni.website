@@ -540,7 +540,7 @@ if (existingTokens.empty) {
     if ($("adminPanel")) {
       $("adminPanel").hidden = currentRole !== "admin";
     }
-
+updateAttendanceAdminButton();
     if ($("studentComplaintsPanel")) {
       $("studentComplaintsPanel").hidden = true;
     }
@@ -591,7 +591,7 @@ setTimeout(showNotificationPrompt, 1000);
   function renderSignedOut() {
     currentUser = null;
     currentRole = "student";
-
+updateAttendanceAdminButton();
     stopStudentAttendance();
     stopAdminComplaints();
     stopAllComplaints();
@@ -811,15 +811,15 @@ function loadTopNotifications() {
     topNotificationUnsubscribe();
   }
 
-  firstTopNotificationSnapshot = true;
+  let firstNoticeLoad = true;
+  let firstUpdateLoad = true;
 
-  topNotificationUnsubscribe = db
+  const noticeUnsubscribe = db
     .collection("notifications")
     .orderBy("createdAt", "desc")
     .onSnapshot(snapshot => {
-
-      if (firstTopNotificationSnapshot) {
-        firstTopNotificationSnapshot = false;
+      if (firstNoticeLoad) {
+        firstNoticeLoad = false;
         return;
       }
 
@@ -832,12 +832,44 @@ function loadTopNotifications() {
           return;
         }
 
-        showTopNotification(data.title || "New Notification", data.body || "");
+        showTopNotification(
+          data.title || "New Campus Notice",
+          data.body || ""
+        );
       });
-
     }, error => {
-      console.error("Top notification error:", error);
+      console.error("Campus notification error:", error);
     });
+
+  const updateUnsubscribe = db
+    .collection("updateNotifications")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      if (firstUpdateLoad) {
+        firstUpdateLoad = false;
+        return;
+      }
+
+      snapshot.docChanges().forEach(change => {
+        if (change.type !== "added") return;
+
+        const data = change.doc.data();
+
+        if (data.createdBy === currentUser.uid) return;
+
+        showTopNotification(
+          data.title || "College Update",
+          data.body || ""
+        );
+      });
+    }, error => {
+      console.error("Update notification error:", error);
+    });
+
+  topNotificationUnsubscribe = () => {
+    noticeUnsubscribe();
+    updateUnsubscribe();
+  };
 }
   async function sendOneSignalPush(title, body) {
   try {
