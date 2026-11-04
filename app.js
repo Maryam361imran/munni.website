@@ -554,6 +554,7 @@ if (existingTokens.empty) {
     );
 
     loadNotifications();
+    loadTopNotifications();
     loadUpdateNotifications();
 setTimeout(showNotificationPrompt, 1000);
 
@@ -785,6 +786,59 @@ async function createUpdateNotification(title, body, targetUid = null) {
       });
   }
 
+  let topNotificationUnsubscribe = null;
+let firstTopNotificationSnapshot = true;
+
+function showTopNotification(title, body) {
+  const banner = $("topNotificationBanner");
+
+  if (!banner) return;
+
+  $("topNotificationTitle").textContent = title;
+  $("topNotificationBody").textContent = body;
+
+  banner.hidden = false;
+}
+
+on("closeTopNotification", "click", () => {
+  $("topNotificationBanner").hidden = true;
+});
+
+function loadTopNotifications() {
+  if (!currentUser || !db) return;
+
+  if (topNotificationUnsubscribe) {
+    topNotificationUnsubscribe();
+  }
+
+  firstTopNotificationSnapshot = true;
+
+  topNotificationUnsubscribe = db
+    .collection("notifications")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+
+      if (firstTopNotificationSnapshot) {
+        firstTopNotificationSnapshot = false;
+        return;
+      }
+
+      snapshot.docChanges().forEach(change => {
+        if (change.type !== "added") return;
+
+        const data = change.doc.data();
+
+        if (data.targetUid && data.targetUid !== currentUser.uid) {
+          return;
+        }
+
+        showTopNotification(data.title || "New Notification", data.body || "");
+      });
+
+    }, error => {
+      console.error("Top notification error:", error);
+    });
+}
 // ==========================================
 // CAMPUS NOTICE EDIT / DELETE BUTTONS
 // ==========================================
@@ -850,6 +904,9 @@ on("noticeList", "click", async event => {
     showToast(friendlyError(error));
   }
 });
+
+
+  
   
   // ==========================================
   // 10. UPDATE NOTIFICATION LISTENER
