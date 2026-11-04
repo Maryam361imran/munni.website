@@ -1813,6 +1813,50 @@ function loadUpdateNotifications() {
       });
   }
 
+on("complaintForm", "submit", async (event) => {
+  event.preventDefault();
+
+  if (!currentUser) {
+    showToast("Please sign in first.");
+    openAuth();
+    return;
+  }
+
+  if (!db) {
+    showToast("Database is not connected.");
+    return;
+  }
+
+  const category = $("complaintCategory").value;
+  const subject = $("complaintSubject").value.trim();
+  const message = $("complaintMessage").value.trim();
+  const status = $("complaintMessageStatus");
+
+  if (!category || !subject || !message) {
+    setStatus(status, "Please complete all fields.");
+    return;
+  }
+
+  try {
+    await db.collection("complaints").add({
+      uid: currentUser.uid,
+      email: currentUser.email || "",
+      category,
+      subject,
+      message,
+      status: "Submitted",
+      createdAt: serverTime()
+    });
+
+    $("complaintForm").reset();
+    setStatus(status, "Complaint submitted successfully!");
+    showToast("Complaint submitted successfully.");
+  } catch (error) {
+    console.error("Complaint submission error:", error);
+    setStatus(status, "Unable to submit complaint. Please try again.");
+  }
+});
+
   // ==========================================
   // PART 3 ENDS HERE
 
