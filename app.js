@@ -785,6 +785,72 @@ async function createUpdateNotification(title, body, targetUid = null) {
       });
   }
 
+// ==========================================
+// CAMPUS NOTICE EDIT / DELETE BUTTONS
+// ==========================================
+
+on("noticeList", "click", async event => {
+  const editButton = event.target.closest("[data-notice-edit]");
+  const deleteButton = event.target.closest("[data-notice-delete]");
+
+  if (!isAdmin()) return;
+
+  try {
+    if (editButton) {
+      const id = editButton.dataset.noticeEdit;
+
+      const doc = await db
+        .collection("notifications")
+        .doc(id)
+        .get();
+
+      if (!doc.exists) {
+        showToast("Notice not found.");
+        return;
+      }
+
+      const data = doc.data();
+
+      editingNoticeId = id;
+
+      $("noticeTitle").value = data.title || "";
+      $("noticeType").value = data.type || "";
+      $("noticeBody").value = data.body || "";
+
+      $("noticeForm").querySelector("h3").textContent =
+        "Edit campus notice";
+
+      $("noticeForm")
+        .querySelector('button[type="submit"]')
+        .textContent = "Save changes";
+
+      $("noticeForm").scrollIntoView({
+        behavior: "smooth"
+      });
+
+    } else if (deleteButton) {
+      const id = deleteButton.dataset.noticeDelete;
+
+      if (!confirm("Are you sure you want to delete this notice?")) {
+        return;
+      }
+
+      await db.collection("notifications").doc(id).delete();
+
+      await createUpdateNotification(
+        "Campus Notice Deleted",
+        "The college administration has removed a campus notice."
+      );
+
+      showToast("Campus notice deleted successfully.");
+    }
+
+  } catch (error) {
+    console.error("Notice action error:", error);
+    showToast(friendlyError(error));
+  }
+});
+  
   // ==========================================
   // 10. UPDATE NOTIFICATION LISTENER
   // ==========================================
