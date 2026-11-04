@@ -1357,14 +1357,41 @@ function loadUpdateNotifications() {
 
         showToast("Campus notice updated successfully.");
 
-      } else {
-        await db.collection("notifications").add({
-          title,
-          type,
-          body,
-          createdBy: currentUser.uid,
-          createdAt: serverTime()
-        });
+      }} else {
+  // Save notice in Firestore
+  await db.collection("notifications").add({
+    title,
+    type,
+    body,
+    createdBy: currentUser.uid,
+    createdAt: serverTime()
+  });
+
+  // Get Firebase login token
+  const idToken = await currentUser.getIdToken();
+
+  // Send push notification through Cloudflare Worker
+  const pushResponse = await fetch(
+    "https://college-notifications.maryam361imran.workers.dev/",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`
+      },
+      body: JSON.stringify({
+        title: title,
+        body: body
+      })
+    }
+  );
+
+  if (!pushResponse.ok) {
+    showToast("Notice published, but push notification could not be sent.");
+  } else {
+    showToast("Notice published and push notification sent successfully.");
+  }
+});
 
         showToast("Campus notice published successfully.");
       }
