@@ -1264,62 +1264,6 @@ function loadUpdateNotifications() {
   // ==========================================
   // 13. CAMPUS NOTICE MANAGEMENT
   // ==========================================
-
-  on("noticeList", "click", async event => {
-    if (!isAdmin()) return;
-
-    const edit = event.target.closest("[data-notice-edit]");
-    const del = event.target.closest("[data-notice-delete]");
-
-    try {
-      if (edit) {
-        const id = edit.dataset.noticeEdit;
-
-        const doc = await db.collection("notifications")
-          .doc(id)
-          .get();
-
-        if (!doc.exists) return;
-
-        const data = doc.data();
-
-        editingNoticeId = id;
-
-        $("noticeTitle").value = data.title || "";
-        $("noticeType").value = data.type || "General";
-        $("noticeBody").value = data.body || "";
-
-        $("noticeForm").querySelector("h3").textContent =
-          "Edit notice";
-
-        $("noticeForm")
-          .querySelector('button[type="submit"]')
-          .textContent = "Save changes";
-
-        $("noticeForm").scrollIntoView({ behavior: "smooth" });
-
-      } else if (del) {
-        const id = del.dataset.noticeDelete;
-
-        if (!confirm("Are you sure you want to delete this notice?")) {
-          return;
-        }
-
-        await db.collection("notifications").doc(id).delete();
-
-        await createUpdateNotification(
-          "Campus Notice Updated",
-          "The college administration has removed a campus notice."
-        );
-
-        showToast("Campus notice deleted successfully.");
-      }
-
-    } catch (error) {
-      showToast(friendlyError(error));
-    }
-  });
-
   on("noticeForm", "submit", async event => {
     event.preventDefault();
 
@@ -1354,46 +1298,40 @@ function loadUpdateNotifications() {
         );
 
         editingNoticeId = null;
-
         showToast("Campus notice updated successfully.");
 
-      }} else {
-  // Save notice in Firestore
-  await db.collection("notifications").add({
-    title,
-    type,
-    body,
-    createdBy: currentUser.uid,
-    createdAt: serverTime()
-  });
+      } else {
+        await db.collection("notifications").add({
+          title,
+          type,
+          body,
+          createdBy: currentUser.uid,
+          createdAt: serverTime()
+        });
 
-  // Get Firebase login token
-  const idToken = await currentUser.getIdToken();
+        try {
+          const idToken = await currentUser.getIdToken();
 
-  // Send push notification through Cloudflare Worker
-  const pushResponse = await fetch(
-    "https://college-notifications.maryam361imran.workers.dev/",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${idToken}`
-      },
-      body: JSON.stringify({
-        title: title,
-        body: body
-      })
-    }
-  );
+          const pushResponse = await fetch(
+            "https://college-notifications.maryam361imran.workers.dev/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`
+              },
+              body: JSON.stringify({ title, body })
+            }
+          );
 
-  if (!pushResponse.ok) {
-    showToast("Notice published, but push notification could not be sent.");
-  } else {
-    showToast("Notice published and push notification sent successfully.");
-  }
-});
-
-        showToast("Campus notice published successfully.");
+          if (!pushResponse.ok) {
+            showToast("Notice published, but push notification could not be sent.");
+          } else {
+            showToast("Notice published and push notification sent successfully.");
+          }
+        } catch (pushError) {
+          showToast("Notice published, but push notification could not be sent.");
+        }
       }
 
       $("noticeForm").reset();
@@ -1407,76 +1345,6 @@ function loadUpdateNotifications() {
 
     } catch (error) {
       showToast(friendlyError(error));
-    }
-  });
-
-  // ==========================================
-  // PART 2 ENDS HERE
-
-
-  // ==========================================
-  // 14. COMPLAINT SUBMISSION
-  // ==========================================
-
-  on("complaintForm", "submit", async event => {
-    event.preventDefault();
-
-    if (!currentUser) {
-      openAuth();
-
-      setStatus(
-        "complaintMessageStatus",
-        "Please sign in before submitting a complaint."
-      );
-
-      return;
-    }
-
-    const form = $("complaintForm");
-
-    const submitButton =
-      form?.querySelector('button[type="submit"]');
-
-    if (submitButton) submitButton.disabled = true;
-
-    try {
-      const category = $("complaintCategory").value;
-      const subject = $("complaintSubject").value.trim();
-      const message = $("complaintMessage").value.trim();
-
-      if (!category || !subject || !message) {
-        throw new Error("Please complete all complaint fields.");
-      }
-
-      await db.collection("complaints").add({
-        uid: currentUser.uid,
-        email: currentUser.email,
-        category,
-        subject,
-        message,
-        status: "Submitted",
-        adminReply: "",
-        createdAt: serverTime()
-      });
-
-      form.reset();
-
-      setStatus(
-        "complaintMessageStatus",
-        "Your complaint has been submitted successfully.",
-        true
-      );
-
-      showToast("Complaint submitted.");
-
-    } catch (error) {
-      setStatus(
-        "complaintMessageStatus",
-        friendlyError(error)
-      );
-
-    } finally {
-      if (submitButton) submitButton.disabled = false;
     }
   });
 
