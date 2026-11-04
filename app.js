@@ -691,17 +691,17 @@ async function createUpdateNotification(title, body, targetUid = null) {
     createdAt: serverTime()
   };
 
-  if (targetUid) {
-    // Private notification for one student
-    await db.collection("users")
-      .doc(targetUid)
-      .collection("notifications")
-      .add(notification);
-  } else {
-    // General update for all signed-in students
-    await db.collection("updateNotifications")
-      .add(notification);
-  }
+ if (targetUid) {
+  await db.collection("users")
+    .doc(targetUid)
+    .collection("notifications")
+    .add(notification);
+} else {
+  await db.collection("updateNotifications")
+    .add(notification);
+
+  await sendOneSignalPush(title, body);
+}
 }
 
   // ==========================================
@@ -838,6 +838,32 @@ function loadTopNotifications() {
     }, error => {
       console.error("Top notification error:", error);
     });
+}
+  async function sendOneSignalPush(title, body) {
+  try {
+    if (!currentUser) return;
+
+    const idToken = await currentUser.getIdToken();
+
+    const response = await fetch(
+      "https://college-notifications.maryam361imran.workers.dev/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ title, body })
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Push notification failed:", await response.text());
+    }
+
+  } catch (error) {
+    console.error("Push notification error:", error);
+  }
 }
 // ==========================================
 // CAMPUS NOTICE EDIT / DELETE BUTTONS
