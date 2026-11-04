@@ -2402,4 +2402,26 @@ document.getElementById("blockNotifications")?.addEventListener("click", () => {
 
     prompt.hidden = true;
 });
+  // Admin-only attendance panel button
+const attendanceAdminBtn = document.getElementById(
+  "viewAttendanceAdminBtn"
+);
+
+function updateAttendanceAdminButton() {
+  if (!attendanceAdminBtn) return;
+
+  attendanceAdminBtn.style.display =
+    currentUser && isAdmin() ? "inline-block" : "none";
+}
+
+attendanceAdminBtn?.addEventListener("click", () => {
+  const panel = document.getElementById("attendanceAdminPanel");
+
+  if (panel) {
+    panel.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+});
 })();
