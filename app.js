@@ -1411,93 +1411,79 @@ function loadUpdateNotifications() {
   });
 
   // ==========================================
-  // 13. CAMPUS NOTICE MANAGEMENT
-  // ==========================================
-  on("noticeForm", "submit", async event => {
-    event.preventDefault();
+ 
+// ==========================================
+// 13. CAMPUS NOTICE MANAGEMENT
+// ==========================================
 
-    if (!isAdmin()) {
-      showToast("Only the administrator can manage campus notices.");
+on("noticeForm", "submit", async event => {
+  event.preventDefault();
+
+  if (!isAdmin()) {
+    showToast("Only the administrator can manage campus notices.");
+    return;
+  }
+
+  try {
+    const title = $("noticeTitle").value.trim();
+    const type = $("noticeType").value;
+    const body = $("noticeBody").value.trim();
+
+    if (!title || !type || !body) {
+      showToast("Please complete all notice fields.");
       return;
     }
 
-    try {
-      const title = $("noticeTitle").value.trim();
-      const type = $("noticeType").value;
-      const body = $("noticeBody").value.trim();
-
-      if (!title || !type || !body) {
-        showToast("Please complete all notice fields.");
-        return;
-      }
-
-      if (editingNoticeId) {
-        await db.collection("notifications")
-          .doc(editingNoticeId)
-          .update({
-            title,
-            type,
-            body,
-            updatedAt: serverTime()
-          });
-
-        await createUpdateNotification(
-          "Campus Notice Updated",
-          "The college administration has updated a campus notice."
-        );
-
-        editingNoticeId = null;
-        showToast("Campus notice updated successfully.");
-
-      } else {
-        await db.collection("notifications").add({
+    if (editingNoticeId) {
+      await db.collection("notifications")
+        .doc(editingNoticeId)
+        .update({
           title,
           type,
           body,
-          createdBy: currentUser.uid,
-          createdAt: serverTime()
+          updatedAt: serverTime()
         });
 
-        try {
-          const idToken = await currentUser.getIdToken();
+      await createUpdateNotification(
+        "Campus Notice Updated",
+        "The college administration has updated a campus notice."
+      );
 
-          const pushResponse = await fetch(
-            "https://college-notifications.maryam361imran.workers.dev/",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${idToken}`
-              },
-              body: JSON.stringify({ title, body })
-            }
-          );
+      editingNoticeId = null;
 
-          if (!pushResponse.ok) {
-            showToast("Notice published, but push notification could not be sent.");
-          } else {
-            showToast("Notice published and push notification sent successfully.");
-          }
-        } catch (pushError) {
-          showToast("Notice published, but push notification could not be sent.");
-        }
-      }
+      showToast("Campus notice updated successfully.");
 
-      $("noticeForm").reset();
+    } else {
+      await db.collection("notifications").add({
+        title,
+        type,
+        body,
+        createdBy: currentUser.uid,
+        createdAt: serverTime()
+      });
 
-      $("noticeForm").querySelector("h3").textContent =
-        "Publish notification";
+      await createUpdateNotification(
+        "New Campus Notice",
+        `${title}: ${body}`
+      );
 
-      $("noticeForm")
-        .querySelector('button[type="submit"]')
-        .textContent = "Publish notice";
-
-    } catch (error) {
-      showToast(friendlyError(error));
+      showToast("Notice published and notification sent successfully.");
     }
-  });
 
-  // ==========================================
+    $("noticeForm").reset();
+
+    $("noticeForm").querySelector("h3").textContent =
+      "Publish notification";
+
+    $("noticeForm")
+      .querySelector('button[type="submit"]')
+      .textContent = "Publish notice";
+
+  } catch (error) {
+    showToast(friendlyError(error));
+  }
+});
+
   // 15. VIEW COMPLAINTS
   // ==========================================
 
