@@ -2162,3 +2162,23 @@ body.dark #facultyGrid .empty-card {
     transform: translate(-50%, 0);
   }
 }
+/* Mobile Navbar - Dark Mode Fix */
+@media (max-width: 850px) {
+    body.dark nav {
+        background: #172638;
+        border: 1px solid #2c3b4d;
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark nav a {
+        color: #e7edf5 !important;
+    }
+
+    body.dark nav a:hover {
+        color: #e8b85d !important;
+    }
+
+    body.dark .menu-toggle {
+        color: #e7edf5;
+    }
+}
