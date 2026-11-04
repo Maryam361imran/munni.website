@@ -18,15 +18,16 @@
     <script defer src="firebase-config.js"></script>
     <script defer src="app.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function (OneSignal) {
     await OneSignal.init({
       appId: "622964c8-d68c-41c4-837d-84fd5e79da05",
-      serviceWorkerPath: "/maryam.imran_website/OneSignalSDKWorker.js",
-      serviceWorkerParam: {
-        scope: "/maryam.imran_website/"
+serviceWorkerPath: "/munni.website/OneSignalSDKWorker.js",
+serviceWorkerParam: {
+  scope: "/munni.website/"
+}
       }
     });
   });
